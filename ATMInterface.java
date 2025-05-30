@@ -6,6 +6,8 @@ import model.User;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class ATMInterface extends JFrame {
     private final UserDAO userDAO = new UserDAO();
@@ -24,64 +26,71 @@ public class ATMInterface extends JFrame {
     private void showAnimatedWelcome() {
         getContentPane().removeAll();
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(new Color(0, 51, 102));
+        panel.setBackground(new Color(0, 0, 51));
 
         JLabel welcome = new JLabel("Welcome to Modern ATM", JLabel.CENTER);
-        welcome.setForeground(Color.WHITE);
-        welcome.setFont(new Font("Arial", Font.BOLD, 32));
-        panel.add(welcome, BorderLayout.CENTER);
+        welcome.setForeground(Color.CYAN);
+        welcome.setFont(new Font("Verdana", Font.BOLD, 30));
+        welcome.setBorder(BorderFactory.createEmptyBorder(100, 0, 20, 0));
 
         animatedLabel = new JLabel("Loading", JLabel.CENTER);
         animatedLabel.setForeground(Color.LIGHT_GRAY);
-        animatedLabel.setFont(new Font("Monospaced", Font.ITALIC, 20));
+        animatedLabel.setFont(new Font("Monospaced", Font.PLAIN, 20));
+
+        panel.add(welcome, BorderLayout.CENTER);
         panel.add(animatedLabel, BorderLayout.SOUTH);
 
         setContentPane(panel);
         revalidate(); repaint();
 
-        Timer animationTimer = new Timer(500, (ActionEvent e) -> {
-            dotCount = (dotCount + 1) % 4;
-            animatedLabel.setText("Loading" + ".".repeat(dotCount));
-        });
-        animationTimer.start();
+        // Use java.util.Timer for animation
+        Timer animationTimer = new Timer();
+        animationTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                SwingUtilities.invokeLater(() -> {
+                    dotCount = (dotCount + 1) % 4;
+                    animatedLabel.setText("Loading" + ".".repeat(dotCount));
+                });
+            }
+        }, 0, 500);
 
-        Timer switchTimer = new Timer(3000, e -> {
-            animationTimer.stop();
-            showStartScreen();
+        // Use javax.swing.Timer to stop animation and proceed (no repeat!)
+        javax.swing.Timer switchTimer = new javax.swing.Timer(3000, e -> {
+            animationTimer.cancel();  // stop the dot animation
+            showStartScreen();        // go to Card/Cardless screen
         });
         switchTimer.setRepeats(false);
         switchTimer.start();
     }
-
     private void showStartScreen() {
         getContentPane().removeAll();
-        JPanel startPanel = new JPanel(new BorderLayout());
-        startPanel.setBackground(new Color(240, 248, 255));
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(new Color(230, 245, 255));
 
-        JLabel welcomeLabel = new JLabel("Select Transaction Type", JLabel.CENTER);
-        welcomeLabel.setFont(new Font("Arial", Font.BOLD, 28));
-        welcomeLabel.setForeground(new Color(0, 102, 204));
-        startPanel.add(welcomeLabel, BorderLayout.NORTH);
+        JLabel label = new JLabel("Select Transaction Type", JLabel.CENTER);
+        label.setFont(new Font("Arial", Font.BOLD, 26));
+        label.setForeground(new Color(0, 102, 204));
+        panel.add(label, BorderLayout.NORTH);
 
-        JPanel btnPanel = new JPanel(new FlowLayout());
-        JButton cardBtn = new JButton("Card Transaction");
-        JButton cardlessBtn = new JButton("Cardless Transaction");
+        JPanel buttons = new JPanel(new FlowLayout());
+        JButton card = new JButton("Card Transaction");
+        JButton cardless = new JButton("Cardless Transaction");
+        buttons.add(card);
+        buttons.add(cardless);
 
-        cardBtn.addActionListener(e -> showCardLogin());
-        cardlessBtn.addActionListener(e -> showCardlessLogin());
+        card.addActionListener(e -> showCardLogin());
+        cardless.addActionListener(e -> showCardlessLogin());
 
-        btnPanel.add(cardBtn);
-        btnPanel.add(cardlessBtn);
-        startPanel.add(btnPanel, BorderLayout.CENTER);
-
-        setContentPane(startPanel);
+        panel.add(buttons, BorderLayout.CENTER);
+        setContentPane(panel);
         revalidate(); repaint();
     }
 
     private void showCardLogin() {
         JPanel panel = new JPanel(new GridLayout(3, 2, 10, 10));
+        panel.setBackground(new Color(255, 240, 245));
         panel.setBorder(BorderFactory.createTitledBorder("Card Login"));
-        panel.setBackground(new Color(230, 240, 255));
 
         JTextField cardField = new JTextField();
         JPasswordField pinField = new JPasswordField();
@@ -93,12 +102,9 @@ public class ATMInterface extends JFrame {
 
         JButton backBtn = new JButton("Back");
         backBtn.addActionListener(e -> showStartScreen());
-
         JButton loginBtn = new JButton("Login");
         loginBtn.addActionListener(e -> {
-            String card = cardField.getText();
-            String pin = new String(pinField.getPassword());
-            currentUser = userDAO.validateCardLogin(card, pin);
+            currentUser = userDAO.validateCardLogin(cardField.getText(), new String(pinField.getPassword()));
             if (currentUser != null) showWelcomeScreen();
             else JOptionPane.showMessageDialog(this, "Invalid credentials");
         });
@@ -111,8 +117,8 @@ public class ATMInterface extends JFrame {
 
     private void showCardlessLogin() {
         JPanel panel = new JPanel(new GridLayout(3, 2, 10, 10));
+        panel.setBackground(new Color(255, 255, 224));
         panel.setBorder(BorderFactory.createTitledBorder("Cardless Login"));
-        panel.setBackground(new Color(245, 255, 250));
 
         JTextField accField = new JTextField();
         JPasswordField pinField = new JPasswordField();
@@ -124,12 +130,9 @@ public class ATMInterface extends JFrame {
 
         JButton backBtn = new JButton("Back");
         backBtn.addActionListener(e -> showStartScreen());
-
         JButton loginBtn = new JButton("Login");
         loginBtn.addActionListener(e -> {
-            String acc = accField.getText();
-            String pin = new String(pinField.getPassword());
-            currentUser = userDAO.validateCardlessLogin(acc, pin);
+            currentUser = userDAO.validateCardlessLogin(accField.getText(), new String(pinField.getPassword()));
             if (currentUser != null) showWelcomeScreen();
             else JOptionPane.showMessageDialog(this, "Invalid credentials");
         });
@@ -142,7 +145,7 @@ public class ATMInterface extends JFrame {
 
     private void showWelcomeScreen() {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(new Color(255, 250, 230));
+        panel.setBackground(new Color(204, 255, 229));
 
         JLabel typingLabel = new JLabel("", JLabel.CENTER);
         typingLabel.setFont(new Font("Arial", Font.BOLD, 24));
@@ -154,35 +157,36 @@ public class ATMInterface extends JFrame {
 
         panel.add(typingLabel, BorderLayout.CENTER);
         panel.add(accLabel, BorderLayout.SOUTH);
-
         setContentPane(panel);
         revalidate(); repaint();
 
         String welcomeText = "Welcome, " + currentUser.getName();
         final int[] index = {0};
 
-        Timer typeTimer = new Timer(100, null);
-        typeTimer.addActionListener(e -> {
-            if (index[0] < welcomeText.length()) {
-                typingLabel.setText(welcomeText.substring(0, index[0] + 1));
-                index[0]++;
-            } else {
-                typeTimer.stop();
-                accLabel.setText("Account Number: " + currentUser.getAccountNumber());
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                SwingUtilities.invokeLater(() -> {
+                    if (index[0] < welcomeText.length()) {
+                        typingLabel.setText(welcomeText.substring(0, index[0] + 1));
+                        index[0]++;
+                    } else {
+                        timer.cancel();
+                        accLabel.setText("Account Number: " + currentUser.getAccountNumber());
 
-                // Delay before showing options
-                Timer continueTimer = new Timer(1500, ev -> showATMOptions());
-                continueTimer.setRepeats(false);
-                continueTimer.start();
+                        // Proper one-time delay before ATM menu
+                        javax.swing.Timer nextScreenTimer = new javax.swing.Timer(1500, ev -> showATMOptions());
+                        nextScreenTimer.setRepeats(false);
+                        nextScreenTimer.start();
+                    }
+                });
             }
-        });
-
-        typeTimer.start();
+        }, 0, 100);
     }
-
     private void showATMOptions() {
-        JPanel panel = new JPanel(new GridLayout(5, 1, 10, 10));
-        panel.setBackground(new Color(255, 255, 240));
+        JPanel panel = new JPanel(new GridLayout(6, 1, 10, 10));
+        panel.setBackground(new Color(240, 255, 255));
         panel.setBorder(BorderFactory.createTitledBorder("ATM Options"));
 
         JButton depositBtn = new JButton("Deposit");
@@ -190,22 +194,24 @@ public class ATMInterface extends JFrame {
         JButton balanceBtn = new JButton("Check Balance");
         JButton chatBtn = new JButton("Chat with our AI for help");
         JButton logoutBtn = new JButton("Logout");
+        JButton quitBtn = new JButton("Quit");
 
         depositBtn.addActionListener(e -> deposit());
         withdrawBtn.addActionListener(e -> withdraw());
-        balanceBtn.addActionListener(e -> JOptionPane.showMessageDialog(this,
-                "Current Balance: ₹" + currentUser.getBalance()));
+        balanceBtn.addActionListener(e -> JOptionPane.showMessageDialog(this, "Current Balance: ₹" + currentUser.getBalance()));
         chatBtn.addActionListener(e -> showAIChatbot());
         logoutBtn.addActionListener(e -> {
             currentUser = null;
             showStartScreen();
         });
+        quitBtn.addActionListener(e -> showExitAnimation());
 
         panel.add(depositBtn);
         panel.add(withdrawBtn);
         panel.add(balanceBtn);
         panel.add(chatBtn);
         panel.add(logoutBtn);
+        panel.add(quitBtn);
 
         setContentPane(panel);
         revalidate(); repaint();
@@ -227,13 +233,16 @@ public class ATMInterface extends JFrame {
         String input = JOptionPane.showInputDialog(this, "Enter withdrawal amount:");
         try {
             double amt = Double.parseDouble(input);
-            if (amt > currentUser.getBalance()) {
-                JOptionPane.showMessageDialog(this, "Insufficient balance.");
-                return;
+            int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to withdraw ₹" + amt + "?", "Confirm Withdrawal", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                if (amt > currentUser.getBalance()) {
+                    JOptionPane.showMessageDialog(this, "Insufficient balance.");
+                } else {
+                    currentUser.setBalance(currentUser.getBalance() - amt);
+                    userDAO.updateBalance(currentUser.getCardNumber(), currentUser.getBalance());
+                    JOptionPane.showMessageDialog(this, "₹" + amt + " withdrawn successfully!");
+                }
             }
-            currentUser.setBalance(currentUser.getBalance() - amt);
-            userDAO.updateBalance(currentUser.getCardNumber(), currentUser.getBalance());
-            JOptionPane.showMessageDialog(this, "₹" + amt + " withdrawn successfully!");
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Invalid amount.");
         }
@@ -264,13 +273,37 @@ public class ATMInterface extends JFrame {
 
     private String botReply(String msg) {
         msg = msg.toLowerCase();
-
-        if (msg.contains("balance")) return "Click on 'Check Balance' to see your balance.";
-        if (msg.contains("deposit")) return "Use 'Deposit' button to add funds to your account.";
-        if (msg.contains("withdraw")) return "Click on 'Withdraw' to take out money.";
-        if (msg.contains("help")) return "I can guide you with login, deposit, withdraw, and balance checks!";
+        if (msg.contains("balance")) return "Click 'Check Balance' to view balance.";
+        if (msg.contains("deposit")) return "Click 'Deposit' to add money.";
+        if (msg.contains("withdraw")) return "Use 'Withdraw' to take out money.";
         if (msg.contains("hi") || msg.contains("hello")) return "Hello! How can I assist you today?";
-        return "Sorry, I didn't understand. Try asking about deposit, withdraw, or balance.";
+        return "Try asking about balance, deposit, or withdraw.";
+    }
+
+    private void showExitAnimation() {
+        getContentPane().removeAll();
+        JLabel thankYouLabel = new JLabel("", JLabel.CENTER);
+        thankYouLabel.setFont(new Font("Verdana", Font.BOLD, 24));
+        thankYouLabel.setForeground(new Color(0, 128, 128));
+        setLayout(new BorderLayout());
+        add(thankYouLabel, BorderLayout.CENTER);
+        revalidate(); repaint();
+
+        String message = "Thank you for using our ATM. Hope you liked the service.";
+        final int[] index = {0};
+
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                if (index[0] < message.length()) {
+                    thankYouLabel.setText(thankYouLabel.getText() + message.charAt(index[0]));
+                    index[0]++;
+                } else {
+                    timer.cancel();
+                }
+            }
+        }, 0, 80);
     }
 
     public static void main(String[] args) {
