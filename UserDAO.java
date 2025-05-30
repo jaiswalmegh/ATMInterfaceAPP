@@ -2,11 +2,13 @@ package DAO;
 
 import db.DBConnection;
 import model.User;
+
 import java.sql.*;
 
 public class UserDAO {
+
     public User validateCardLogin(String cardNumber, String pin) {
-        String sql = "SELECT * FROM users WHERE card_number=? AND pin=?";
+        String sql = "SELECT * FROM users WHERE card_number = ? AND pin = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, cardNumber);
@@ -15,26 +17,39 @@ public class UserDAO {
             if (rs.next()) {
                 return extractUser(rs);
             }
-        } catch (Exception e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return null;
     }
 
-    public User validateCardlessLogin(String accNo, String ePin) {
-        String sql = "SELECT * FROM users WHERE account_number=? AND ebanking_pin=?";
+    public User validateCardlessLogin(String accountNumber, String ebankingPin) {
+        String sql = "SELECT * FROM users WHERE account_number = ? AND ebanking_pin = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, accNo);
-            stmt.setString(2, ePin);
+            stmt.setString(1, accountNumber);
+            stmt.setString(2, ebankingPin);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 return extractUser(rs);
             }
-        } catch (Exception e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public boolean updateBalance(String cardNumber, double newBalance) {
+        String sql = "UPDATE users SET balance = ? WHERE card_number = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setDouble(1, newBalance);
+            stmt.setString(2, cardNumber);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     private User extractUser(ResultSet rs) throws SQLException {
@@ -46,16 +61,5 @@ public class UserDAO {
                 rs.getString("name"),
                 rs.getDouble("balance")
         );
-    }
-    public boolean updateBalance(String cardNumber, double newBalance) {
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement("UPDATE users SET balance=? WHERE card_number=?")) {
-            stmt.setDouble(1, newBalance);
-            stmt.setString(2, cardNumber);
-            return stmt.executeUpdate() > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
     }
 }
