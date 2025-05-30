@@ -1,7 +1,11 @@
 package model;
 
 public class User {
-    private String cardNumber, pin, accountNumber, ebankingPin, name;
+    private String cardNumber;
+    private String pin;
+    private String accountNumber;
+    private String ebankingPin;
+    private String name;
     private double balance;
 
     public User(String cardNumber, String pin, String accountNumber, String ebankingPin, String name, double balance) {
@@ -19,5 +23,8 @@ public class User {
     public String getEbankingPin() { return ebankingPin; }
     public String getName() { return name; }
     public double getBalance() { return balance; }
-    public void setBalance(double balance) { this.balance = balance; }
+
+    public void setBalance(double balance) {
+        this.balance = balance;
+    }
 }
