@@ -70,6 +70,39 @@ YAML
 - More advanced AI chatbot with natural language understanding.
 
 ---
+🗄️🔥 **MySQL Database Schema & Setup** 🔥🗄️
+-- Create and use the database
+CREATE DATABASE IF NOT EXISTS myatm_db;
+USE myatm_db;
+
+-- Create the users table with all columns including 'name'
+CREATE TABLE users (
+    card_number VARCHAR(20) PRIMARY KEY,
+    pin VARCHAR(10),
+    account_number VARCHAR(20) UNIQUE,
+    ebanking_pin VARCHAR(10),
+    balance DOUBLE DEFAULT 0.0,
+    name VARCHAR(100)
+);
+
+-- Insert user data including names
+INSERT INTO users (card_number, pin, account_number, ebanking_pin, balance, name) VALUES
+('1234567890', '1234', '9876543210', '4321', 5000.0, 'Anjali Sharma'),
+('1111222233', '5678', '1020304050', '7788', 3000.0, 'Rohan Mehta'),
+('9192939495', '0062', '1200564892', '6286', 9000.0, 'Shivam Mishra'),
+('951954880853', '0210', '1980104000013280', '0210', 50000.0, 'Megh Jaiswal'),
+('001002003004', '1111', '1122334455', '2222', 20000.0, 'Navneet Kumar Pandey');
+
+-- Create the transactions table
+CREATE TABLE transactions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    card_number VARCHAR(20),
+    type VARCHAR(20),          -- 'Deposit' or 'Withdraw'
+    amount DOUBLE,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+
 
 ## 📄 License
 
